@@ -1,16 +1,6 @@
 import React, { useState } from "react";
-import {
-  StyleSheet,
-  View,
-  Text,
-  Image,
-  SafeAreaView,
-  TouchableOpacity,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-} from "react-native";
-import { Input, Button, Icon } from "react-native-elements"; // 👈 add Icon
+import { StyleSheet, View, Text, Image, SafeAreaView, TouchableOpacity, Alert, KeyboardAvoidingView, ScrollView, Platform, } from "react-native";
+import { Input, Button, Icon } from "react-native-elements";
 import { Link, useRouter } from "expo-router";
 import { supabase } from "../supabase/supabaseClient";
 import "react-native-url-polyfill/auto";
@@ -20,11 +10,10 @@ import * as Linking from "expo-linking";
 WebBrowser.maybeCompleteAuthSession();
 
 const LoginScreen = () => {
-  // ---------- State ----------
   const [focusedInput, setFocusedInput] = useState(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // 👈 NEW
+  const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState("");
 
   const router = useRouter();
@@ -33,7 +22,7 @@ const LoginScreen = () => {
   // ---------- Email/Password Login ----------
   const handleLogin = async () => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -74,33 +63,21 @@ const LoginScreen = () => {
       }
 
       if (data?.url) {
-        console.log("Opening Google login page:", data.url);
-
         const result = await WebBrowser.openAuthSessionAsync(
           data.url,
           redirectUrl
         );
 
         if (result.type === "success" && result.url) {
-          console.log("Returned URL:", result.url);
-
-          // Exchange code for session
-          const { data: sessionData, error: sessionError } =
+          const { error: sessionError } =
             await supabase.auth.exchangeCodeForSession(result.url);
 
           if (sessionError) {
-            console.error("Session error:", sessionError.message);
             setMessage(sessionError.message);
             return;
           }
 
-          if (sessionData?.session) {
-            console.log(
-              "Logged in with Google:",
-              sessionData.session.user.email
-            );
-            router.replace("/home");
-          }
+          router.replace("/home");
         }
       }
     } catch (err) {
@@ -109,117 +86,126 @@ const LoginScreen = () => {
     }
   };
 
-  // ---------- UI ----------
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <SafeAreaView style={styles.container}>
-        {/* Logo */}
-        <Image
-          source={require("../assets/Museo_Logo.png")}
-          style={styles.logo}
-        />
-
-        {/* Title */}
-        <Text style={styles.title}>LOGIN</Text>
-
-        {/* Email Input */}
-        <View style={styles.inputWrapper}>
-          {!email && <Text style={styles.placeholderText}>Email</Text>}
-          <Input
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            containerStyle={[
-              styles.inputContainer,
-              focusedInput === "email" && styles.focusedContainer,
-            ]}
-            inputContainerStyle={commonInputContainerStyle}
-            inputStyle={styles.inputStyle}
-            onFocus={() => setFocusedInput("email")}
-            onBlur={() => setFocusedInput(null)}
-          />
-        </View>
-
-        {/* Password Input with show/hide */}
-        <View style={styles.inputWrapper}>
-          {!password && <Text style={styles.placeholderText}>Password</Text>}
-          <Input
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!showPassword} // 👈 toggle visibility
-            containerStyle={[
-              styles.inputContainer,
-              focusedInput === "password" && styles.focusedContainer,
-            ]}
-            inputContainerStyle={commonInputContainerStyle}
-            inputStyle={styles.inputStyle}
-            onFocus={() => setFocusedInput("password")}
-            onBlur={() => setFocusedInput(null)}
-            rightIcon={
-              <Icon
-                name={showPassword ? "eye" : "eye-off"}
-                type="ionicon"
-                color="#000"
-                size={22}
-                onPress={() => setShowPassword(!showPassword)}
-                containerStyle={{ marginTop: 20 }}
-              />
-            }
-          />
-        </View>
-
-        {/* Forgot Password */}
-        <TouchableOpacity style={styles.forgotPasswordContainer}>
-          <Text style={styles.forgotPassword}>Forgot your password?</Text>
-        </TouchableOpacity>
-
-        {/* Login Button */}
-        <Button
-          title="Login with Email"
-          onPress={handleLogin}
-          buttonStyle={styles.loginButton}
-          titleStyle={styles.loginButtonTitle}
-          containerStyle={styles.loginButtonContainer}
-        />
-
-        {/* Error Message */}
-        {message ? <Text style={styles.errorMsg}>{message}</Text> : null}
-
-        {/* Signup Link */}
-        <View style={styles.signupContainer}>
-          <Text style={styles.signupText}>Create Account?</Text>
-          <Link href="/signup" style={styles.signupLink}>
-            Register
-          </Link>
-        </View>
-
-        {/* Google Login Button */}
-        <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={60}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Logo */}
           <Image
-            source={require("../assets/googlelogo.jpg")}
-            style={styles.googleLogo}
+            source={require("../assets/Museo_Logo.png")}
+            style={styles.logo}
           />
-          <Text style={styles.googleText}>Continue with Google</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-    </KeyboardAvoidingView>
+
+          {/* Title */}
+          <Text style={styles.title}>Login to your account</Text>
+          <Text style={styles.subtitle}>Enter your credentials to continue</Text>
+
+          {/* Email Input */}
+          <View style={styles.inputWrapper}>
+            {!email && <Text style={styles.placeholderText}>Email</Text>}
+            <Input
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              containerStyle={[
+                styles.inputContainer,
+                focusedInput === "email" && styles.focusedContainer,
+              ]}
+              inputContainerStyle={commonInputContainerStyle}
+              inputStyle={styles.inputStyle}
+              onFocus={() => setFocusedInput("email")}
+              onBlur={() => setFocusedInput(null)}
+            />
+          </View>
+
+          {/* Password Input */}
+          <View style={styles.inputWrapper}>
+            {!password && <Text style={styles.placeholderText}>Password</Text>}
+            <Input
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              rightIcon={
+                <Icon
+                  name={showPassword ? "eye" : "eye-off"}
+                  type="ionicon"
+                  color="#000"
+                  size={22}
+                  onPress={() => setShowPassword(!showPassword)}
+                  containerStyle={{ marginTop: 20 }}
+                />
+              }
+              containerStyle={[
+                styles.inputContainer,
+                focusedInput === "password" && styles.focusedContainer,
+              ]}
+              inputContainerStyle={commonInputContainerStyle}
+              inputStyle={styles.inputStyle}
+              onFocus={() => setFocusedInput("password")}
+              onBlur={() => setFocusedInput(null)}
+            />
+          </View>
+
+          {/* Forgot Password */}
+          <TouchableOpacity style={styles.forgotPasswordContainer}>
+            <Text style={styles.forgotPassword}>Forgot your password?</Text>
+          </TouchableOpacity>
+
+          {/* Login Button */}
+          <Button
+            title="Login"
+            onPress={handleLogin}
+            buttonStyle={styles.loginButton}
+            titleStyle={styles.loginButtonTitle}
+            containerStyle={styles.loginButtonContainer}
+          />
+
+          {/* Error Message */}
+          {message ? <Text style={styles.errorMsg}>{message}</Text> : null}
+
+          {/* Signup Link */}
+          <View style={styles.signupContainer}>
+            <Text style={styles.signupText}>Don't have an account?</Text>
+            <Link href="/signup" style={styles.signupLink}>
+              Register
+            </Link>
+          </View>
+
+          {/* Google Login Button */}
+          <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
+            <Image
+              source={require("../assets/googlelogo.jpg")}
+              style={styles.googleLogo}
+            />
+            <Text style={styles.googleText}>Continue with Google</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 export default LoginScreen;
 
-// ---------- Styles ----------
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    alignItems: "center",
     backgroundColor: "#fff",
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    alignItems: "center",
     paddingHorizontal: 30,
     paddingTop: 60,
+    paddingBottom: 30,
   },
   logo: {
     width: 200,
@@ -233,6 +219,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#000",
     marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "#888",
+    textAlign: "center",
+    marginBottom: 30,
   },
   inputWrapper: {
     width: "100%",

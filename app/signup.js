@@ -1,19 +1,12 @@
 import React, { useState } from "react";
-import {
-  StyleSheet,
-  View,
-  Text,
-  SafeAreaView,
-  Image,
-  Alert,
-  KeyboardAvoidingView,
-  ScrollView,
-  Platform,
-} from "react-native";
+import { StyleSheet, View, Text, SafeAreaView, Image, Alert, KeyboardAvoidingView, ScrollView, Platform, TouchableOpacity, } from "react-native";
 import { Input, Button, Icon } from "react-native-elements";
+import { useNavigation } from "@react-navigation/native";
 import { supabase } from "../supabase/supabaseClient";
 
 const SignupScreen = () => {
+  const navigation = useNavigation();
+
   const [focusedInput, setFocusedInput] = useState(null);
   const [fullname, setFullname] = useState("");
   const [email, setEmail] = useState("");
@@ -52,15 +45,22 @@ const SignupScreen = () => {
         "Success",
         "Account created! Please check your email to confirm your account."
       );
+      navigation.goBack();
     }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
+
+      {/* Back Button */}
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <Icon name="arrow-back" type="ionicon" color="#000" size={28} />
+      </TouchableOpacity>
+
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={60} // adjust if you have a header
+        keyboardVerticalOffset={60}
       >
         <ScrollView
           contentContainerStyle={styles.scrollContainer}
@@ -186,6 +186,12 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: "#fff",
+  },
+  backButton: {
+    position: "absolute",
+    top: 20,
+    left: 20,
+    zIndex: 10,
   },
   scrollContainer: {
     flexGrow: 1,
