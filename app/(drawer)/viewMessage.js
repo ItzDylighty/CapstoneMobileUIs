@@ -1,23 +1,10 @@
-import React, { useRef, useState, useEffect } from 'react';
-import {
-  SafeAreaView,
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TextInput,
-  Image,
-  TouchableOpacity,
-  Keyboard,
-  Animated,
-  TouchableWithoutFeedback,
-} from 'react-native';
+import React, { useRef, useState } from 'react';
+import { SafeAreaView, View, Text, StyleSheet, FlatList, TextInput, Image, TouchableOpacity, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../components/Header';
 
-// Dummy messages
 const messagesData = [
   { id: '1', text: 'Hello tol', sender: 'other', avatar: require('../../assets/nat.jpeg') },
   { id: '2', text: 'Pwede patulong?', sender: 'other', avatar: require('../../assets/nat.jpeg') },
@@ -28,37 +15,13 @@ const messagesData = [
   { id: '7', text: 'Sige pre', sender: 'me' },
 ];
 
-const ViewMessageScreen = () => {
+function ViewMessageScreen() {
   const { name } = useLocalSearchParams();
   const flatListRef = useRef(null);
   const [messages, setMessages] = useState(messagesData);
   const [inputText, setInputText] = useState('');
   const [inputHeight, setInputHeight] = useState(40);
   const insets = useSafeAreaInsets();
-
-  const keyboardHeight = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const showSub = Keyboard.addListener('keyboardDidShow', (e) => {
-      Animated.timing(keyboardHeight, {
-        toValue: e.endCoordinates.height,
-        duration: 250,
-        useNativeDriver: false,
-      }).start();
-    });
-    const hideSub = Keyboard.addListener('keyboardDidHide', () => {
-      Animated.timing(keyboardHeight, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: false,
-      }).start();
-    });
-
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
 
   const renderItem = ({ item }) => (
     <View
@@ -96,52 +59,60 @@ const ViewMessageScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <Header title="Message" showSearch={false} />
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.bottom : 0}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <View style={{ flex: 1 }}>
+            <FlatList
+              ref={flatListRef}
+              data={messages}
+              keyExtractor={(item) => item.id}
+              renderItem={renderItem}
+              contentContainerStyle={styles.chatContainer}
+              onContentSizeChange={() =>
+                flatListRef.current?.scrollToEnd({ animated: true })
+              }
+              style={{ flex: 1 }}
+              keyboardShouldPersistTaps="handled"
+            />
 
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss} style={{ flex: 1 }}>
-        <View style={{ flex: 1 }}>
-          <FlatList
-            ref={flatListRef}
-            data={messages}
-            keyExtractor={(item) => item.id}
-            renderItem={renderItem}
-            contentContainerStyle={styles.chatContainer}
-            onContentSizeChange={() =>
-              flatListRef.current?.scrollToEnd({ animated: true })
-            }
-            style={{ flex: 1 }}
-          />
+            <View
+              style={[
+                styles.inputContainerWrapper,
+                { paddingBottom: Platform.OS === 'ios' ? insets.bottom : 0 },
+              ]}
+            >
+              <View style={styles.inputContainer}>
+                <TouchableOpacity style={styles.mediaButton}>
+                  <Ionicons name="images-outline" size={20} color="#888" />
+                </TouchableOpacity>
 
-          <Animated.View
-            style={[
-              styles.inputContainerWrapper,
-              { paddingBottom: insets.bottom + 8, bottom: keyboardHeight },
-            ]}
-          >
-            <View style={styles.inputContainer}>
-              <TouchableOpacity style={styles.mediaButton}>
-                <Ionicons name="images-outline" size={20} color="#888" />
-              </TouchableOpacity>
+                <TextInput
+                  style={[styles.input, { height: Math.max(40, inputHeight) }]}
+                  placeholder="Write a message..."
+                  placeholderTextColor="#888"
+                  value={inputText}
+                  onChangeText={setInputText}
+                  multiline
+                  onContentSizeChange={(e) =>
+                    setInputHeight(e.nativeEvent.contentSize.height)
+                  }
+                />
 
-              <TextInput
-                style={[styles.input, { height: Math.max(40, inputHeight) }]}
-                placeholder="Write a message..."
-                placeholderTextColor="#888"
-                value={inputText}
-                onChangeText={setInputText}
-                multiline={true}
-                onContentSizeChange={(e) => setInputHeight(e.nativeEvent.contentSize.height)}
-              />
-
-              <TouchableOpacity onPress={handleSend}>
-                <Ionicons name="send" size={24} color="#000" />
-              </TouchableOpacity>
+                <TouchableOpacity onPress={handleSend}>
+                  <Ionicons name="send" size={24} color="#000" />
+                </TouchableOpacity>
+              </View>
             </View>
-          </Animated.View>
-        </View>
-      </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f0f2f5' },
@@ -165,13 +136,12 @@ const styles = StyleSheet.create({
   myBubble: { backgroundColor: '#6200EE' },
   messageText: { fontSize: 15, color: '#000' },
   myMessageText: { color: '#fff' },
-  inputContainerWrapper: { position: 'absolute', left: 0, right: 0 },
+  inputContainerWrapper: { backgroundColor: '#fff' },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 15,
     paddingVertical: 6,
-    backgroundColor: '#fff',
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: '#e0e0e0',
   },
@@ -189,3 +159,4 @@ const styles = StyleSheet.create({
 });
 
 export default ViewMessageScreen;
+

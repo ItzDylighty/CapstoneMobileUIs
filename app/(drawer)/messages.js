@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, Text, SafeAreaView, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import Header from '../components/Header'; // Reusable header
+import Header from '../components/Header';
 
 // Chat item component
 const ChatItem = ({ name, lastMessage, imageSource, onPress }) => (

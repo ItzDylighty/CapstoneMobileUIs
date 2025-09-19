@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { useNavigation, useRouter } from 'expo-router';
-import Header from "../components/Header"; // make sure this path matches your project structure
+import Header from "../components/Header";
 
 export default function ProfileScreen() {
   const navigation = useNavigation();
