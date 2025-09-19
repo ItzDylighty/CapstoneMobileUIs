@@ -59,10 +59,11 @@ function ViewMessageScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <Header title="Message" showSearch={false} />
+
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.bottom : 0}
+        keyboardVerticalOffset={insets.bottom}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
           <View style={{ flex: 1 }}>
@@ -79,10 +80,11 @@ function ViewMessageScreen() {
               keyboardShouldPersistTaps="handled"
             />
 
+            {/* input bar stays above Android nav bar and iOS home indicator */}
             <View
               style={[
                 styles.inputContainerWrapper,
-                { paddingBottom: Platform.OS === 'ios' ? insets.bottom : 0 },
+                { paddingBottom: Math.max(insets.bottom, 8) },
               ]}
             >
               <View style={styles.inputContainer}>
