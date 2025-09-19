@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View, Text, SafeAreaView, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRouter } from 'expo-router';
-import Header from '../components/Header'; // Import reusable Header
+import Header from '../components/Header';
 
 const MarketplaceScreen = () => {
   const navigation = useNavigation();
@@ -79,19 +79,6 @@ const MarketplaceScreen = () => {
           </View>
         </View>
       </ScrollView>
-
-      {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity>
-          <Feather name="menu" size={24} color="black" />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Ionicons name="home" size={24} color="black" />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Ionicons name="arrow-back" size={24} color="black" />
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 };

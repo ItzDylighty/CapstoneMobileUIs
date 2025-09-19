@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { SafeAreaView, View, Text, StyleSheet, FlatList, TextInput, Image, TouchableOpacity, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, } from 'react-native';
+import React, { useRef, useState, useEffect } from 'react';
+import { SafeAreaView, View, Text, StyleSheet, FlatList, TextInput, Image, TouchableOpacity, Keyboard, Animated, Platform, TouchableWithoutFeedback, KeyboardAvoidingView } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,13 +15,38 @@ const messagesData = [
   { id: '7', text: 'Sige pre', sender: 'me' },
 ];
 
-function ViewMessageScreen() {
+const ViewMessageScreen = () => {
   const { name } = useLocalSearchParams();
   const flatListRef = useRef(null);
   const [messages, setMessages] = useState(messagesData);
   const [inputText, setInputText] = useState('');
   const [inputHeight, setInputHeight] = useState(40);
   const insets = useSafeAreaInsets();
+  const keyboardHeight = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      const showSub = Keyboard.addListener('keyboardDidShow', (e) => {
+        Animated.timing(keyboardHeight, {
+          toValue: e.endCoordinates.height,
+          duration: 250,
+          useNativeDriver: false,
+        }).start();
+      });
+      const hideSub = Keyboard.addListener('keyboardDidHide', () => {
+        Animated.timing(keyboardHeight, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: false,
+        }).start();
+      });
+
+      return () => {
+        showSub.remove();
+        hideSub.remove();
+      };
+    }
+  }, []);
 
   const renderItem = ({ item }) => (
     <View
@@ -56,16 +81,62 @@ function ViewMessageScreen() {
     }, 100);
   };
 
+  const InputBar = (
+    <View style={[styles.inputContainerWrapper, { paddingBottom: Math.max(insets.bottom, 8) }]}>
+      <View style={styles.inputContainer}>
+        <TouchableOpacity style={styles.mediaButton}>
+          <Ionicons name="images-outline" size={20} color="#888" />
+        </TouchableOpacity>
+
+        <TextInput
+          style={[styles.input, { height: Math.max(40, inputHeight) }]}
+          placeholder="Write a message..."
+          placeholderTextColor="#888"
+          value={inputText}
+          onChangeText={setInputText}
+          multiline
+          onContentSizeChange={(e) =>
+            setInputHeight(e.nativeEvent.contentSize.height)
+          }
+        />
+
+        <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
+          <Ionicons name="send" size={20} color="white" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
-      <Header title="Message" showSearch={false} />
+      <Header title="View Message" showSearch={false} />
 
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={insets.bottom}
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      {Platform.OS === 'ios' ? (
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior="padding"
+          keyboardVerticalOffset={insets.bottom}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={{ flex: 1 }}>
+              <FlatList
+                ref={flatListRef}
+                data={messages}
+                keyExtractor={(item) => item.id}
+                renderItem={renderItem}
+                contentContainerStyle={styles.chatContainer}
+                onContentSizeChange={() =>
+                  flatListRef.current?.scrollToEnd({ animated: true })
+                }
+                style={{ flex: 1 }}
+                keyboardShouldPersistTaps="handled"
+              />
+              {InputBar}
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      ) : (
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={{ flex: 1 }}>
             <FlatList
               ref={flatListRef}
@@ -79,42 +150,15 @@ function ViewMessageScreen() {
               style={{ flex: 1 }}
               keyboardShouldPersistTaps="handled"
             />
-
-            {/* input bar stays above Android nav bar and iOS home indicator */}
-            <View
-              style={[
-                styles.inputContainerWrapper,
-                { paddingBottom: Math.max(insets.bottom, 8) },
-              ]}
-            >
-              <View style={styles.inputContainer}>
-                <TouchableOpacity style={styles.mediaButton}>
-                  <Ionicons name="images-outline" size={20} color="#888" />
-                </TouchableOpacity>
-
-                <TextInput
-                  style={[styles.input, { height: Math.max(40, inputHeight) }]}
-                  placeholder="Write a message..."
-                  placeholderTextColor="#888"
-                  value={inputText}
-                  onChangeText={setInputText}
-                  multiline
-                  onContentSizeChange={(e) =>
-                    setInputHeight(e.nativeEvent.contentSize.height)
-                  }
-                />
-
-                <TouchableOpacity onPress={handleSend}>
-                  <Ionicons name="send" size={24} color="#000" />
-                </TouchableOpacity>
-              </View>
-            </View>
+            <Animated.View style={{ position: 'absolute', left: 0, right: 0, bottom: keyboardHeight }}>
+              {InputBar}
+            </Animated.View>
           </View>
         </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
+      )}
     </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f0f2f5' },
@@ -146,6 +190,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: '#e0e0e0',
+    backgroundColor: '#fff',
   },
   input: {
     flex: 1,
@@ -156,6 +201,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
     marginHorizontal: 8,
     maxHeight: 120,
+  },
+  sendButton: {
+    backgroundColor: '#6200EE',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   mediaButton: { padding: 5 },
 });
