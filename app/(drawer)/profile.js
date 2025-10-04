@@ -1,18 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Modal,
-  TextInput,
-  Platform,
-  KeyboardAvoidingView,
-  TouchableWithoutFeedback,
-  Keyboard,
-} from "react-native";
+import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, Modal, TextInput, Platform, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, } from "react-native"; // use one line for this
 import * as ImagePicker from "expo-image-picker";
 import { useNavigation, useRouter } from "expo-router";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -29,6 +16,7 @@ export default function ProfileScreen() {
   const [firstName, setFirstName] = useState("");
   const [middleName, setMiddleName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [userNameField, setUserNameField] = useState("");
 
   // Combined username for profile display
   const [username, setUsername] = useState("");
@@ -36,6 +24,7 @@ export default function ProfileScreen() {
   const [gender, setGender] = useState("");
   const [birthday, setBirthday] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showGenderDropdown, setShowGenderDropdown] = useState(false);
   const [address, setAddress] = useState("");
   const [bio, setBio] = useState("");
   const [about, setAbout] = useState("");
@@ -43,8 +32,13 @@ export default function ProfileScreen() {
   const [backgroundImage, setBackgroundImage] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
 
+  // Temporary states for unsaved edits
+  const [tempImage, setTempImage] = useState(null);
+  const [tempBackgroundImage, setTempBackgroundImage] = useState(null);
+
   const formattedDate = birthday.toLocaleDateString("en-US");
 
+  // Pick temporary profile image
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -54,10 +48,11 @@ export default function ProfileScreen() {
     });
 
     if (!result.canceled) {
-      setImage({ uri: result.assets[0].uri });
+      setTempImage({ uri: result.assets[0].uri });
     }
   };
 
+  // Pick temporary background image
   const pickBackgroundImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -67,13 +62,20 @@ export default function ProfileScreen() {
     });
 
     if (!result.canceled) {
-      setBackgroundImage({ uri: result.assets[0].uri });
+      setTempBackgroundImage({ uri: result.assets[0].uri });
     }
   };
 
+  // Save changes
   const handleSave = () => {
-    const fullName = [firstName, middleName, lastName].filter(Boolean).join(" ");
-    setUsername(fullName);
+    const displayName =
+      userNameField || [firstName, middleName, lastName].filter(Boolean).join(" ");
+    setUsername(displayName);
+
+    // Apply temp images
+    setImage(tempImage);
+    setBackgroundImage(tempBackgroundImage);
+
     setModalVisible(false);
   };
 
@@ -110,8 +112,8 @@ export default function ProfileScreen() {
           )}
         </View>
 
-        <Text style={styles.name}>{username || "User"}</Text>
-        <Text style={styles.detail}>Gender: {gender}</Text>
+        <Text style={styles.name}>{username || "Username"}</Text>
+        <Text style={styles.detail}>Sex: {gender}</Text>
         <Text style={styles.detail}>Birthday: {formattedDate}</Text>
         <Text style={styles.detail}>Address: {address}</Text>
         <Text style={styles.detail}>Bio: {bio}</Text>
@@ -119,7 +121,12 @@ export default function ProfileScreen() {
         <View style={styles.buttonRow}>
           <TouchableOpacity
             style={styles.button}
-            onPress={() => setModalVisible(true)}
+            onPress={() => {
+              // copy current profile data into temp states before editing
+              setTempImage(image);
+              setTempBackgroundImage(backgroundImage);
+              setModalVisible(true);
+            }}
           >
             <Text style={styles.buttonText}>Edit Profile</Text>
           </TouchableOpacity>
@@ -182,8 +189,8 @@ export default function ProfileScreen() {
                 <Text style={styles.modalTitle}>Edit Profile</Text>
 
                 <TouchableOpacity onPress={pickImage} style={styles.imagePicker}>
-                  {image ? (
-                    <Image source={image} style={styles.avatarEdit} />
+                  {tempImage ? (
+                    <Image source={tempImage} style={styles.avatarEdit} />
                   ) : (
                     <View style={[styles.avatarEdit, styles.placeholderCircle]}>
                       <Icon name="user" size={40} color="#999" />
@@ -197,9 +204,9 @@ export default function ProfileScreen() {
                   style={styles.imagePicker}
                 >
                   <View style={styles.backgroundPreviewContainer}>
-                    {backgroundImage ? (
+                    {tempBackgroundImage ? (
                       <Image
-                        source={{ uri: backgroundImage.uri }}
+                        source={{ uri: tempBackgroundImage.uri }}
                         style={styles.backgroundPreviewImage}
                         resizeMode="cover"
                       />
@@ -242,14 +249,50 @@ export default function ProfileScreen() {
                   onChangeText={setLastName}
                 />
 
-                {/* Gender Input */}
+                {/* Username Input */}
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter your gender (Male/Female)"
+                  placeholder="Username"
                   placeholderTextColor="#999"
-                  value={gender}
-                  onChangeText={setGender}
+                  value={userNameField}
+                  onChangeText={setUserNameField}
                 />
+
+                {/* Gender Dropdown */}
+                <View style={styles.inputContainer}>
+                  <TouchableOpacity
+                    style={styles.input}
+                    onPress={() => setShowGenderDropdown(!showGenderDropdown)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={{ color: gender ? "#000" : "#999" }}>
+                      {gender || "Select Sex"}
+                    </Text>
+                    <Icon
+                      name={showGenderDropdown ? "angle-up" : "angle-down"}
+                      size={20}
+                      color="#555"
+                      style={{ position: "absolute", right: 10, top: 12 }}
+                    />
+                  </TouchableOpacity>
+
+                  {showGenderDropdown && (
+                    <View style={styles.dropdownList}>
+                      {["Male", "Female", "Others"].map((item) => (
+                        <TouchableOpacity
+                          key={item}
+                          style={styles.dropdownItem}
+                          onPress={() => {
+                            setGender(item);
+                            setShowGenderDropdown(false);
+                          }}
+                        >
+                          <Text style={styles.dropdownItemText}>{item}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
 
                 {/* Date Picker */}
                 <TouchableOpacity
@@ -257,7 +300,9 @@ export default function ProfileScreen() {
                   onPress={() => setShowDatePicker(true)}
                 >
                   <Text style={{ color: birthday ? "#000" : "#888" }}>
-                    {birthday ? `Birthday: ${formattedDate}` : "Select your birthday"}
+                    {birthday
+                      ? `Birthday: ${formattedDate}`
+                      : "Select your birthday"}
                   </Text>
                 </TouchableOpacity>
 
@@ -365,7 +410,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
   },
-  aboutText: { fontSize: 14, color: "#333", textAlign: "center" },
+  aboutText: { fontSize: 14, color: "black", textAlign: "center" },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
@@ -403,7 +448,12 @@ const styles = StyleSheet.create({
     elevation: 5,
     alignItems: "center",
   },
-  modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 15 },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginTop: 30,
+    marginBottom: 15,
+  },
   imagePicker: { alignItems: "center", marginVertical: 10 },
   avatarEdit: { width: 90, height: 90, borderRadius: 45 },
   changePhotoText: {
@@ -420,6 +470,30 @@ const styles = StyleSheet.create({
     padding: 10,
     marginVertical: 5,
     width: "100%",
+  },
+  inputContainer: {
+    width: "100%",
+    position: "relative",
+  },
+  dropdownList: {
+    width: "100%",
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    marginTop: -5,
+    elevation: 3,
+    zIndex: 10,
+  },
+  dropdownItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  dropdownItemText: {
+    fontSize: 16,
+    color: "#000",
   },
   modalButtons: {
     flexDirection: "row",
@@ -440,7 +514,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 25,
     borderRadius: 20,
   },
-  cancelButtonText: { color: "#333", fontWeight: "bold" },
+  cancelButtonText: { color: "black", fontWeight: "bold" },
   placeholderCircle: {
     backgroundColor: "#f0f0f0",
     justifyContent: "center",
@@ -456,15 +530,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f0f0",
     justifyContent: "center",
     alignItems: "center",
+    alignSelf: "center",
   },
   backgroundPreviewImage: {
     width: "100%",
     height: "100%",
   },
 });
-
-
-
-
 
 

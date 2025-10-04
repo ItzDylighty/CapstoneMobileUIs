@@ -19,7 +19,7 @@ const LoginScreen = () => {
   const router = useRouter();
   const commonInputContainerStyle = { borderBottomWidth: 0, height: 30 };
 
-  // ---------- Email/Password Login ----------
+  // Email/Password Login
   const handleLogin = async () => {
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -40,7 +40,7 @@ const LoginScreen = () => {
     }
   };
 
-  // ---------- Google OAuth Login ----------
+  // Google OAuth Login 
   const handleGoogleLogin = async () => {
     try {
       const redirectUrl = Linking.createURL("/auth/callback", {
@@ -171,12 +171,11 @@ const LoginScreen = () => {
           {/* Error Message */}
           {message ? <Text style={styles.errorMsg}>{message}</Text> : null}
 
-          {/* Signup Link */}
-          <View style={styles.signupContainer}>
-            <Text style={styles.signupText}>Don't have an account?</Text>
-            <Link href="/signup" style={styles.signupLink}>
-              Register
-            </Link>
+          {/* OR Separator */}
+          <View style={styles.orContainer}>
+            <View style={styles.line} />
+            <Text style={styles.orText}>OR</Text>
+            <View style={styles.line} />
           </View>
 
           {/* Google Login Button */}
@@ -187,6 +186,15 @@ const LoginScreen = () => {
             />
             <Text style={styles.googleText}>Continue with Google</Text>
           </TouchableOpacity>
+
+          {/* Signup Link */}
+          <View style={styles.signupContainer}>
+            <Text style={styles.signupText}>Don't have an account?</Text>
+            <Link href="/signup" style={styles.signupLink}>
+              Register
+            </Link>
+          </View>
+
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -319,5 +327,22 @@ const styles = StyleSheet.create({
   errorMsg: {
     color: "red",
     marginTop: 10,
+  },
+  orContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+    marginVertical: 15,
+  },
+  orLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#ccc",
+  },
+  orText: {
+    marginHorizontal: 10,
+    fontSize: 14,
+    color: "#888",
   },
 });

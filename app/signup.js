@@ -1,5 +1,16 @@
 import React, { useState } from "react";
-import { StyleSheet, View, Text, SafeAreaView, Image, Alert, KeyboardAvoidingView, ScrollView, Platform, TouchableOpacity, } from "react-native";
+import {
+  StyleSheet,
+  View,
+  Text,
+  SafeAreaView,
+  Image,
+  Alert,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
+  TouchableOpacity,
+} from "react-native";
 import { Input, Button, Icon } from "react-native-elements";
 import { useNavigation } from "@react-navigation/native";
 import { supabase } from "../supabase/supabaseClient";
@@ -8,7 +19,6 @@ const SignupScreen = () => {
   const navigation = useNavigation();
 
   const [focusedInput, setFocusedInput] = useState(null);
-  const [fullname, setFullname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -21,7 +31,7 @@ const SignupScreen = () => {
   };
 
   const handleSignup = async () => {
-    if (!fullname || !email || !password || !confirm) {
+    if (!email || !password || !confirm) {
       Alert.alert("Error", "Please fill in all fields");
       return;
     }
@@ -33,9 +43,6 @@ const SignupScreen = () => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        data: { fullname },
-      },
     });
 
     if (error) {
@@ -49,11 +56,24 @@ const SignupScreen = () => {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+      });
+      if (error) throw error;
+    } catch (error) {
+      Alert.alert("Google Login Error", error.message);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
-
       {/* Back Button */}
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+      >
         <Icon name="arrow-back" type="ionicon" color="#000" size={28} />
       </TouchableOpacity>
 
@@ -74,23 +94,6 @@ const SignupScreen = () => {
           <Text style={styles.subtitle}>
             Enter your details to create a new account
           </Text>
-
-          {/* Full Name */}
-          <View style={styles.inputWrapper}>
-            {!fullname && <Text style={styles.placeholderText}>Full Name</Text>}
-            <Input
-              value={fullname}
-              onChangeText={setFullname}
-              containerStyle={[
-                styles.inputContainer,
-                focusedInput === "fullname" && styles.focusedContainer,
-              ]}
-              inputContainerStyle={commonInputContainerStyle}
-              inputStyle={styles.inputStyle}
-              onFocus={() => setFocusedInput("fullname")}
-              onBlur={() => setFocusedInput(null)}
-            />
-          </View>
 
           {/* Email */}
           <View style={styles.inputWrapper}>
@@ -169,6 +172,7 @@ const SignupScreen = () => {
             />
           </View>
 
+          {/* Create Button */}
           <Button
             title="Create Account"
             onPress={handleSignup}
@@ -176,6 +180,32 @@ const SignupScreen = () => {
             titleStyle={styles.createButtonTitle}
             containerStyle={styles.createButtonContainer}
           />
+
+          {/* OR Divider */}
+          <View style={styles.orContainer}>
+            <View style={styles.orLine} />
+            <Text style={styles.orText}>or</Text>
+            <View style={styles.orLine} />
+          </View>
+
+          {/* Google Login Button */}
+          <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
+            <Image
+              source={require("../assets/googlelogo.jpg")}
+              style={styles.googleLogo}
+            />
+            <Text style={styles.googleText}>Continue with Google</Text>
+          </TouchableOpacity>
+
+          {/* Already have an account? */}
+          <View style={styles.signinContainer}>
+            <Text style={styles.signinText}>
+              Already have an account?{" "}
+            </Text>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Text style={styles.signinLink}>Sign in</Text>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -251,6 +281,7 @@ const styles = StyleSheet.create({
   },
   createButtonContainer: {
     width: "100%",
+    marginTop: 10,
   },
   createButton: {
     backgroundColor: "#fff",
@@ -264,6 +295,62 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#000",
   },
+  orContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+    marginVertical: 15,
+  },
+  orLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#ccc",
+  },
+  orText: {
+    marginHorizontal: 10,
+    fontSize: 14,
+    color: "#888",
+  },
+  googleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 30,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    backgroundColor: "#fff",
+    width: "100%",
+  },
+  googleLogo: {
+    width: 22,
+    height: 22,
+    marginRight: 10,
+    resizeMode: "contain",
+  },
+  googleText: {
+    fontSize: 16,
+    color: "#000",
+    fontWeight: "500",
+  },
+  signinContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 25,
+  },
+  signinText: {
+    fontSize: 14,
+    color: "#888",
+  },
+  signinLink: {
+    fontSize: 14,
+    color: "#000",
+    fontWeight: "bold",
+  },
 });
 
 export default SignupScreen;
+
